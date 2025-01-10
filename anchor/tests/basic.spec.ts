@@ -132,81 +132,117 @@ describe('basic', () => {
 
 
   // })
-  // it("should send the bonds to the treasury from user wallet", async () => {
+
+  it("Should get bonds list ", async () => {
+
+
+    const bonds = await StablebondProgram.getBonds(
+      "https://api.devnet.solana.com"
+    );
+    const bond = bonds[6];
+    console.log("Selected Bond:", bond);
+
+    const stablebondProgram2 = new StablebondProgram(
+      "https://api.devnet.solana.com",
+      wallet
+    );
+
+    const mintBond = await stablebondProgram2.mintBond(
+      bond.address,
+      new Decimal(5.0)
+    );
+    console.log("Mint Bond:", mintBond);
+
+    setTimeout(() => {
+     ////
+    }, 10000);
+
+    const solanaAddress = bs58.encode(mintBond);
+    console.log("Solana Address:", solanaAddress);
+
+
+    const tx = await connection.getTransaction(solanaAddress, {
+        commitment: "confirmed",
+        maxSupportedTransactionVersion: 0
+    });
+    console.log("Transaction:", tx);
+
+
+  })
+
+  it("should send the bonds to the treasury from user wallet", async () => {
    
-  //     // Setup that needs to happen before all tests
-  //     [treasury] = PublicKey.findProgramAddressSync(
-  //       [Buffer.from("TREASURY3")],
-  //       program.programId
-  //     );
+      // Setup that needs to happen before all tests
+      [treasury] = PublicKey.findProgramAddressSync(
+        [Buffer.from("TREASURY3")],
+        program.programId
+      );
   
-  //     console.log("Treasury PDA", treasury.toBase58());
+      console.log("Treasury PDA", treasury.toBase58());
   
-  //     bond_ata = await getAssociatedTokenAddress(
-  //       bond_coin_mint,
-  //       treasury,
-  //       true,
-  //       TOKEN_2022_PROGRAM_ID
-  //     );
+      bond_ata = await getAssociatedTokenAddress(
+        bond_coin_mint,
+        treasury,
+        true,
+        TOKEN_2022_PROGRAM_ID
+      );
   
-  //     console.log("Treasurybond_ata", bond_ata.toBase58());
+      console.log("Treasurybond_ata", bond_ata.toBase58());
 
-  //     //transfer checked bonds to treasury  
-  //     const userWallet = wallet.publicKey;
+      //transfer checked bonds to treasury  
+      const userWallet = wallet.publicKey;
 
-  //     // Get the user's associated token account for the bond token
-  // const userBondAta = await getAssociatedTokenAddress(
-  //   bond_coin_mint,
-  //   userWallet,
-  //   false,
-  //   TOKEN_2022_PROGRAM_ID
-  // );
+      // Get the user's associated token account for the bond token
+  const userBondAta = await getAssociatedTokenAddress(
+    bond_coin_mint,
+    userWallet,
+    false,
+    TOKEN_2022_PROGRAM_ID
+  );
 
-  // console.log("User bond_ata", userBondAta.toBase58());
+  console.log("User bond_ata", userBondAta.toBase58());
 
-  // //transfer checked bonds to treasury
-  // const amountToTransfer = 1000000; // 1 token with 6 decimals
-  // const decimals = 6;
+  //transfer checked bonds to treasury
+  const amountToTransfer = 10000000; // 1 token with 6 decimals
+  const decimals = 6;
 
-  // const transferIx = createTransferCheckedInstruction(
-  //   userBondAta,
-  //   bond_coin_mint,
-  //   bond_ata,
-  //   userWallet,
-  //   amountToTransfer,
-  //   decimals,
-  //   [],
-  //   TOKEN_2022_PROGRAM_ID
-  // );
+  const transferIx = createTransferCheckedInstruction(
+    userBondAta,
+    bond_coin_mint,
+    bond_ata,
+    userWallet,
+    amountToTransfer,
+    decimals,
+    [],
+    TOKEN_2022_PROGRAM_ID
+  );
 
-  // const tx = new Transaction().add(transferIx);
-  // const txSig = await sendAndConfirmTransaction(
-  //   provider.connection,
-  //   tx,
-  //   [payer],
-  //   { skipPreflight: false }
-  // );
+  const tx = new Transaction().add(transferIx);
+  const txSig = await sendAndConfirmTransaction(
+    provider.connection,
+    tx,
+    [payer],
+    { skipPreflight: false }
+  );
 
-  // console.log("Transfer successful, TX:", txSig);
+  console.log("Transfer successful, TX:", txSig);
 
-  // // --- Get the balance of the treasury's bond ATA ---
+  // --- Get the balance of the treasury's bond ATA ---
 
-  // // Fetch the account info using getAccount
-  // const treasuryBondAtaAccount = await getAccount(
-  //   provider.connection,
-  //   bond_ata,
-  //   "confirmed", // Use "confirmed" commitment for reliable balance
-  //   TOKEN_2022_PROGRAM_ID
-  // );
+  // Fetch the account info using getAccount
+  const treasuryBondAtaAccount = await getAccount(
+    provider.connection,
+    bond_ata,
+    "confirmed", 
+    TOKEN_2022_PROGRAM_ID
+  );
 
-  // // Log the balance
-  // console.log(
-  //   "Treasury bond ATA balance:",
-  //   treasuryBondAtaAccount.amount.toString()
-  // );
-
- 
-  // })
+  // Log the balance
+  console.log(
+    "Treasury bond ATA balance:",
+    treasuryBondAtaAccount.amount.toString()
+  );
+  }, 2000)
  
 
   // it("should create the bondata and transfer ownership", async () => {
@@ -260,51 +296,51 @@ describe('basic', () => {
   //   console.log("Transaction signature:", txHash);
   // });
 
-  it("should create the bondata", async () => {
-    // ... other parts of your test setup (make sure you have bond_coin_mint defined) ...
+//   it("should create the bondata", async () => {
+   
   
-    // Derive the treasury PDA
-    const [treasury] = PublicKey.findProgramAddressSync(
-      [Buffer.from("TREASURY3")],
-      program.programId
-    );
+//     // Derive the treasury PDA
+//     const [treasury] = PublicKey.findProgramAddressSync(
+//       [Buffer.from("TREASURY3")],
+//       program.programId
+//     );
   
-    console.log("Treasury PDA", treasury.toBase58()); // Log treasury
+//     console.log("Treasury PDA", treasury.toBase58()); // Log treasury
   
-    // Calculate the bond_ata (treasury's bond token ATA)
-    const bond_ata = await getAssociatedTokenAddress(
-      bond_coin_mint, // Your bond token mint (make sure this is defined)
-      treasury, // Owner of the ATA (treasury PDA)
-      true, // Allow PDA owner
-      TOKEN_2022_PROGRAM_ID // Token 2022 program ID
-    );
+//     // Calculate the bond_ata (treasury's bond token ATA)
+//     const bond_ata = await getAssociatedTokenAddress(
+//       bond_coin_mint, // Your bond token mint (make sure this is defined)
+//       treasury, // Owner of the ATA (treasury PDA)
+//       true, // Allow PDA owner
+//       TOKEN_2022_PROGRAM_ID // Token 2022 program ID
+//     );
   
-    console.log("Treasurybond_ata", bond_ata.toBase58()); // Log bond_ata
+//     console.log("Treasurybond_ata", bond_ata.toBase58()); 
   
-    // Create the instruction to create the ATA
-    const createATAInstruction = createAssociatedTokenAccountInstruction(
-      wallet.publicKey, // Payer
-      bond_ata, // ATA to create
-      treasury, // Owner (treasury PDA)
-      bond_coin_mint, // Mint
-      TOKEN_2022_PROGRAM_ID // Token 2022 program ID
-    );
+
+//     const createATAInstruction = createAssociatedTokenAccountInstruction(
+//       wallet.publicKey, // Payer
+//       bond_ata, // ATA to create
+//       treasury, // Owner (treasury PDA)
+//       bond_coin_mint, // Mint
+//       TOKEN_2022_PROGRAM_ID // Token 2022 program ID
+//     );
   
-    // Create a transaction with the createATAInstruction
-    const tx = new Transaction().add(createATAInstruction);
+
+//     const tx = new Transaction().add(createATAInstruction);
   
-    const latestBlockhash = await connection.getLatestBlockhash('confirmed');
-    tx.recentBlockhash = latestBlockhash.blockhash;
-    tx.feePayer = payer.publicKey;
+//     const latestBlockhash = await connection.getLatestBlockhash('confirmed');
+//     tx.recentBlockhash = latestBlockhash.blockhash;
+//     tx.feePayer = payer.publicKey;
 
   
-    // Send the transaction
-    const txHash = await connection.sendTransaction(tx, [payer]); // Use 'payer' here
+
+//     const txHash = await connection.sendTransaction(tx, [payer]); // Use 'payer' here
   
-    console.log("Transaction signature:", txHash);
-  });
+//     console.log("Transaction signature:", txHash);
+//   });
   
-});
+// });
 
 
   // it("Should create token", async () => {
@@ -389,40 +425,5 @@ describe('basic', () => {
   //   }
   // });
 
-  // it("Should get bonds list ", async () => {
-
-
-  //   const bonds = await StablebondProgram.getBonds(
-  //     "https://api.devnet.solana.com"
-  //   );
-  //   const bond = bonds[6];
-  //   console.log("Selected Bond:", bond);
-
-  //   const stablebondProgram2 = new StablebondProgram(
-  //     "https://api.devnet.solana.com",
-  //     wallet
-  //   );
-
-  //   const mintBond = await stablebondProgram2.mintBond(
-  //     bond.address,
-  //     new Decimal(50.0)
-  //   );
-  //   console.log("Mint Bond:", mintBond);
-
-  //   setTimeout(() => {
-  //    ////
-  //   }, 10000);
-
-  //   const solanaAddress = bs58.encode(mintBond);
-  //   console.log("Solana Address:", solanaAddress);
-
-
-  //   const tx = await connection.getTransaction(solanaAddress, {
-  //       commitment: "confirmed",
-  //       maxSupportedTransactionVersion: 0
-  //   });
-  //   console.log("Transaction:", tx);
-
-
-  // })
-// });
+  
+})
