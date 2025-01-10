@@ -1,31 +1,102 @@
-'use client'
+"use client";
+import { BASIC_PROGRAM_ID as programId, getBasicProgram } from '@project/anchor'
+import { useConnection } from '@solana/wallet-adapter-react'
+import { useMutation, useQuery } from '@tanstack/react-query'
 
-import { AppHero } from '../ui/ui-layout'
+import toast from 'react-hot-toast'
+import { useCluster } from '../cluster/cluster-data-access'
+import { useAnchorProvider } from '../solana/solana-provider'
+import { useTransactionToast } from '../ui/ui-layout'
 
-const links: { label: string; href: string }[] = [
-  { label: 'Solana Docs', href: 'https://docs.solana.com/' },
-  { label: 'Solana Faucet', href: 'https://faucet.solana.com/' },
-  { label: 'Solana Cookbook', href: 'https://solanacookbook.com/' },
-  { label: 'Solana Stack Overflow', href: 'https://solana.stackexchange.com/' },
-  { label: 'Solana Developers GitHub', href: 'https://github.com/solana-developers/' },
-]
+import { useState, useEffect } from 'react' 
+import Link from 'next/link'
+import { PublicKey } from '@solana/web3.js'
+import { BN } from '@coral-xyz/anchor'
+import { TokenCard } from '../ui/token-card'
+
+interface CoinData {
+  balance: BN
+  mint: PublicKey
+  bump: number
+  symbol: string
+  name: string
+  coinType: string
+  currency: string
+  uri: string
+  image: string
+  description: string
+}
 
 export default function DashboardFeature() {
+  const { connection } = useConnection();
+  const { cluster } = useCluster();
+  const transactionToast = useTransactionToast();
+  const provider = useAnchorProvider();
+  const program = getBasicProgram(provider);
+  const [isLoading, setIsLoading] = useState(false);
+  const [coins, setCoins] = useState<(CoinData & { pubkey: string })[]>([]);
+
+  useEffect(() => {
+    fetchAllCoins();
+  }, []);
+
+  const fetchAllCoins = async () => {
+    setIsLoading(true);
+    try {
+      const accounts = await connection.getProgramAccounts(program.programId);
+      
+      const coinAccounts = await Promise.all(
+        accounts.map(async acc => {
+          try {
+            const coin = await program.account.coinAccount.fetch(acc.pubkey);
+            return {
+              ...coin,
+              pubkey: acc.pubkey.toBase58()
+            };
+          } catch (error) {
+            console.error("Error processing coin account:", error);
+            return null;
+          }
+        })
+      );
+
+      setCoins(coinAccounts.filter((c): c is (CoinData & { pubkey: string }) => 
+        c !== null && 'pubkey' in c && 'mint' in c && 'coinType' in c
+      ));
+    } catch (error) {
+      console.error("Error fetching accounts:", error);
+      toast.error("Failed to fetch coins");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <div>
-      <AppHero title="gm" subtitle="Say hi to your new Solana dApp." />
-      <div className="max-w-xl mx-auto py-6 sm:px-6 lg:px-8 text-center">
-        <div className="space-y-2">
-          <p>Here are some helpful links to get you started.</p>
-          {links.map((link, index) => (
-            <div key={index}>
-              <a href={link.href} className="link" target="_blank" rel="noopener noreferrer">
-                {link.label}
-              </a>
-            </div>
+    <div className="p-4">
+      {isLoading ? (
+        <div className="flex justify-center">
+          <span className="loading loading-spinner loading-lg"></span>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {coins.map((coin) => (
+            <Link 
+              href={`/stablecoins/${coin.mint}`} 
+              key={coin.pubkey}
+            >
+              <TokenCard
+                imageSrc={coin.image}
+                altText={coin.name}
+                title={coin.name}
+                description={coin.description}
+                mintAddress={coin.mint.toBase58()}
+                currency={coin.currency}
+                symbol={coin.symbol}
+              />
+            </Link>
           ))}
         </div>
-      </div>
+      )}
     </div>
-  )
+  );
 }

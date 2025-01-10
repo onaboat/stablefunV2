@@ -14,7 +14,7 @@
 /out/
 
 # production
-/build
+# /build
 
 # misc
 .DS_Store
@@ -35,3 +35,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 tmp
+
+src/components/stablesfun/
+anchor/programs/basic/src/instructions/mint_tokens_old.rs
+anchor/programs/basic/src/instructions/token_create_ata.rs

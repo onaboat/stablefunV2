@@ -1,94 +1,66 @@
-# funstableii
+# Stables.fun
 
-## Getting Started
+[https://stabesfun.vercel.app](https://stabesfun.vercel.app)
 
-### Prerequisites
+Stables.fun – Decentralized Stablecoins on Solana backed by Etherfuse Stablebonds.
 
-- Node v18.18.0 or higher
+Overview
+Stables.fun is a decentralized application (dApp) built on the Solana blockchain, enabling users to mint stablecoins backed by real-world assets like government bonds via Stablebonds. It blends traditional finance with blockchain technology to deliver secure, transparent, and yield-bearing tokens.
 
+Inspired by platforms like Pump.fun, Stables.fun allows users to create custom stablecoins tied to fiat currencies, earning 6–12% annual returns through Etherfuse Stablebonds. 
+
+
+
+## Features
+
+Features for a Custom Stablecoin Ecosystem:
+
+1. Stablecoin Variants
+	•	Everyday Stablecoins:
+	•	Stablecoins that can be freely minted and burned without any burn fees.
+	•	Ideal for daily transactions and utility.
+	•	Savings Stablecoins:
+	•	Stablecoins that allow users to earn interest on their holdings.
+	•	Contributions to these stablecoins fund the treasury, creating a sustainable financial model.
+
+2. Core Token Operations
+	•	Enable minting and burning of tokens in a secure and transparent manner.
+	•	Ensure seamless processes for users and developers.
+
+3. Real-Time Price Feeds
+	•	Integrate real-time price oracles to maintain accurate and up-to-date exchange rates for stablecoins.
+	•	Supports asset-backed stability mechanisms.
+
+4. Wallet Integration
+	•	Provide compatibility with popular wallets (e.g., MetaMask, Phantom, etc.).
+	•	Allow easy access and management of stablecoins for end users.
+
+5. Token Metadata Management
+	•	Support rich metadata for tokens, such as name, symbol, and description.
+	•	Facilitate integration with marketplaces and dApps.
+
+## Prerequisites
+
+- Node.js v18.18.0 or higher
 - Rust v1.77.2 or higher
 - Anchor CLI 0.30.1 or higher
 - Solana CLI 1.18.17 or higher
+- PNPM package manager
 
-### Installation
+## Project Structure
 
-#### Clone the repo
+- `/anchor` - Solana program (smart contract) written in Anchor
+- `/src` - Next.js frontend application
+- `/tests` - Test files for the Solana program
 
-```shell
-git clone <repo-url>
-cd <repo-name>
-```
+## Onchain contract (devnet)
+[https://solscan.io/account/ETwg2dCnvVCqf7JQ4qcp9dBuYmsbLDnPHirAyQFVT817?cluster=devnet](https://solscan.io/account/ETwg2dCnvVCqf7JQ4qcp9dBuYmsbLDnPHirAyQFVT817?cluster=devnet)
 
-#### Install Dependencies
+## Treasury contract (devnet)
+[https://solscan.io/account/FQBv64kBMVAcAJx3daSrNzQsxiBievK1CfBttGobeLYr?cluster=devnet](https://solscan.io/account/FQBv64kBMVAcAJx3daSrNzQsxiBievK1CfBttGobeLYr?cluster=devnet)
 
-```shell
-pnpm install
-```
+## Switchboard feed 
+[https://switchboard.xyz/feed/66bVyxuQ6a4XCAqQHWoiCbG6wjZsZkHgwbGVY7NqQjS5](https://ondemand.switchboard.xyz/solana/devnet/feed/66bVyxuQ6a4XCAqQHWoiCbG6wjZsZkHgwbGVY7NqQjS5)
 
-#### Start the web app
 
-```
-pnpm dev
-```
 
-## Apps
-
-### anchor
-
-This is a Solana program written in Rust using the Anchor framework.
-
-#### Commands
-
-You can use any normal anchor commands. Either move to the `anchor` directory and run the `anchor` command or prefix the command with `pnpm`, eg: `pnpm anchor`.
-
-#### Sync the program id:
-
-Running this command will create a new keypair in the `anchor/target/deploy` directory and save the address to the Anchor config file and update the `declare_id!` macro in the `./src/lib.rs` file of the program.
-
-You will manually need to update the constant in `anchor/lib/basic-exports.ts` to match the new program id.
-
-```shell
-pnpm anchor keys sync
-```
-
-#### Build the program:
-
-```shell
-pnpm anchor-build
-```
-
-#### Start the test validator with the program deployed:
-
-```shell
-pnpm anchor-localnet
-```
-
-#### Run the tests
-
-```shell
-pnpm anchor-test
-```
-
-#### Deploy to Devnet
-
-```shell
-pnpm anchor deploy --provider.cluster devnet
-```
-
-### web
-
-This is a React app that uses the Anchor generated client to interact with the Solana program.
-
-#### Commands
-
-Start the web app
-
-```shell
-pnpm dev
-```
-
-Build the web app
-
-```shell
-pnpm build
-```
