@@ -2,7 +2,6 @@
 
 import { useState, ChangeEvent, useRef, useCallback, useEffect } from 'react'
 import { useConnection, useWallet } from '@solana/wallet-adapter-react'
-import { NEXT_PUBLIC_PINATA_JWT, NEXT_PUBLIC_PINATA_GATEWAY } from '@/components/stablesfun/constants'
 import { useRouter } from 'next/navigation'
 import { toast } from 'react-hot-toast'
 import Link from 'next/link'
@@ -16,8 +15,8 @@ import { createAssociatedTokenAccountInstruction, getAssociatedTokenAddressSync,
 import { PublicKey } from '@solana/web3.js'
 
 const pinata = new PinataSDK({
-    pinataJwt: process.env.NEXT_PUBLIC_PINATA_JWT || NEXT_PUBLIC_PINATA_JWT,
-    pinataGateway: process.env.NEXT_PUBLIC_PINATA_GATEWAY || NEXT_PUBLIC_PINATA_GATEWAY,
+    pinataJwt: process.env.NEXT_PUBLIC_PINATA_JWT,
+    pinataGateway: process.env.NEXT_PUBLIC_PINATA_GATEWAY 
 })
 
 enum Currency {
