@@ -140,7 +140,7 @@ describe('basic', () => {
       "https://api.devnet.solana.com"
     );
     const bond = bonds[6];
-    console.log("Selected Bond:", bond);
+    // console.log("Selected Bond:", bond);
 
     const stablebondProgram2 = new StablebondProgram(
       "https://api.devnet.solana.com",

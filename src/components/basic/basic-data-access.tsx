@@ -229,11 +229,6 @@ export function useBasicProgram() {
   });
 
   const burnCoins = useMutation({
-
-  
-  
-
-
     mutationKey: ['basic', 'tokensBurn', {}],
     mutationFn: async ({
       amount,
@@ -261,7 +256,7 @@ export function useBasicProgram() {
 
       // 2. Derive the treasury PDA
       const [treasury] = PublicKey.findProgramAddressSync(
-        [Buffer.from("TREASURY3")],
+        [Buffer.from("TREASURY3")], // Ensure this matches your on-chain code
         program.programId
       );
       console.log("treasury-basic", treasury.toBase58());
@@ -270,11 +265,12 @@ export function useBasicProgram() {
       const coinAccountBondAta = await getAssociatedTokenAddress(
         bondMint,
         coinAccount,
-        true,
+        true, // Allow owner off-curve (important for PDAs)
         TOKEN_2022_PROGRAM_ID
       );
       console.log("coinAccountBondAta-basic", coinAccountBondAta.toBase58());
 
+      // Get the user's ATA for the stablecoin (Token)
       const userStablecoinAtaAddress = getAssociatedTokenAddressSync(
         mint,
         provider.publicKey,
@@ -282,23 +278,37 @@ export function useBasicProgram() {
         TOKEN_PROGRAM_ID
       );
       console.log("userStablecoinAta-basic", userStablecoinAtaAddress.toBase58());
-      // 4. Define accounts for the burning transaction
+
+      // 4. Derive the sol_transfer PDA
+      const [solTransferPda] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("sol_transfer"),
+          provider.publicKey.toBuffer()
+        ],
+        program.programId
+      );
+      console.log("solTransferPda-basic", solTransferPda.toBase58());
+
+      // 5. Define accounts for the burning transaction
       const accounts = {
         mint,  
         payer: provider.publicKey,
         feed,
         userStablecoinAta: userStablecoinAtaAddress,
-        rent: web3.SYSVAR_RENT_PUBKEY,
-        systemProgram: web3.SystemProgram.programId,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
         coinAccount,
         treasury,
         bondMint,
         treasuryBondAta,
         coinAccountBondAta,
-        tokenProgram2022: TOKEN_2022_PROGRAM_ID
+        solTransfer: solTransferPda, // Add the sol_transfer PDA
+        systemProgram: web3.SystemProgram.programId,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        tokenProgram2022: TOKEN_2022_PROGRAM_ID,
+        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        rent: web3.SYSVAR_RENT_PUBKEY,
       };
+
+      // 6. Fetch the user's stablecoin balance to check if enough to burn
       const tokenBalance = await provider.connection.getTokenAccountBalance(userStablecoinAta);
       const currentBalance = Number(tokenBalance.value.amount);
       const amountToBurn = amount * Math.pow(10, tokenBalance.value.decimals); 
@@ -311,22 +321,22 @@ export function useBasicProgram() {
         throw new Error(`Insufficient token balance. You have ${currentBalance / Math.pow(10, tokenBalance.value.decimals)} tokens`);
       }
 
-      // 5. Convert amount to atomic units
-      const amountAtomic = new BN(amount); // Assuming amount is in stablecoin units
+      // 7. Convert amount to atomic units (using BN for precision)
+      const amountAtomic = new BN(amountToBurn);
 
-      // 6. Log accounts for debugging
+      // 8. Log accounts for debugging
       console.log("Accounts in burnCoins mutation:", accounts);
 
-      // 7. Build the instruction to burn tokens
+      // 9. Build the instruction to burn tokens
       const burnTokensInstruction = await program.methods
         .tokensBurn(amountAtomic)
         .accounts(accounts)
         .instruction();
 
-      // 8. Create a new transaction
+      // 10. Create a new transaction
       const transaction = new Transaction().add(burnTokensInstruction);
 
-      // 9. Return the transaction object
+      // 11. Return the transaction object
       return { transaction };
     },
     onSuccess: (data) => {
@@ -342,27 +352,35 @@ export function useBasicProgram() {
 
  
   const getCoinAccount = useQuery({
-    queryKey: ['basic', 'getCoinAccount', { }],
+    queryKey: ['basic', 'getCoinAccount', {}],
     queryFn: async () => {
       try {
- 
         const accounts = await provider.connection.getProgramAccounts(program.programId);
 
+        const excludedAccounts = [
+          "FQBv64kBMVAcAJx3daSrNzQsxiBievK1CfBttGobeLYr", //treasury account
+          "5BHfykJojo2LnFwmLq9fZruysQALfPtLtdrefzza1Dgz" 
+        ];
+
+        console.log("Excluded accounts:", excludedAccounts);
+
         const coinAccounts = await Promise.all(
-          accounts.map(async (acc) => {
-            try {
-              const coin = await program.account.coinAccount.fetch(acc.pubkey);
-              return {
-                ...coin,
-                pubkey: acc.pubkey.toBase58(),
-              };
-            } catch (error) {
-              console.error("Error processing coin account:", error);
-              return null;
-            }
-          })
+          accounts
+            .filter((acc) => !excludedAccounts.includes(acc.pubkey.toBase58())) // Filter out excluded accounts
+            .map(async (acc) => {
+              try {
+                const coin = await program.account.coinAccount.fetch(acc.pubkey);
+                return {
+                  ...coin,
+                  pubkey: acc.pubkey.toBase58(),
+                };
+              } catch (error) {
+                console.error("Error processing coin account:", error, "Account:", acc.pubkey.toBase58());
+                return null;
+              }
+            })
         );
- 
+
         return coinAccounts.filter((c) => c !== null);
       } catch (error) {
         console.error("Error fetching coin accounts:", error);

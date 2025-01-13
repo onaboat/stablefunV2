@@ -22,23 +22,34 @@ pub fn mint_tokens(ctx: Context<MintTokens>, sol_amount: u64) -> Result<()> {
     msg!("treasury_bond_ata key: {}", ctx.accounts.treasury_bond_ata.key());
     msg!("coin_account_bond_ata key: {}", ctx.accounts.coin_account_bond_ata.key());
 
-    // fetching the SOL/USD price from the Switchboard feed
-    let feed_account = ctx.accounts.feed.data.borrow();
-    let feed = PullFeedAccountData::parse(feed_account).unwrap();
-    let price = feed.value().unwrap();
-    msg!("price: {:?}", price);
-
-    let price_f64 = price.to_string().parse::<f64>().expect("Failed to convert Decimal to f64");
-    msg!("price_f64: {:?}", price_f64);
-
-    // calculating the number of stablecoins to mint
-    let tokens_to_mint = (sol_amount as f64 * price_f64) as u64;
-    msg!("tokens_to_mint: {:?}", tokens_to_mint);
-
-    require!(tokens_to_mint > 0, CustomError::InvalidCalculation);
-
-    msg!("SOL amount: {}, SOL/USD price: {:?}, Tokens to mint: {}", 
-        sol_amount, price, tokens_to_mint);
+     // Fetching the SOL/USD price from the Switchboard feed
+     let feed_account = ctx.accounts.feed.data.borrow();
+     let feed = PullFeedAccountData::parse(feed_account).unwrap();
+     let price = feed.value().unwrap();
+     msg!("price: {:?}", price);
+ 
+     let price_f64 = price.to_string().parse::<f64>().expect("Failed to convert Decimal to f64");
+     msg!("price_f64: {:?}", price_f64);
+ 
+     // Adding a reduction factor
+     let reduction_factor: f64 = 0.0001;
+ 
+     // Calculate the bond amount
+     let bond_decimals = 6;
+     let bond_amount_f64 = sol_amount as f64 / price_f64;
+     let reduced_bond_amount_f64 = bond_amount_f64 * reduction_factor;
+     let bond_amount = (reduced_bond_amount_f64 * 10_f64.powi(bond_decimals as i32)) as u64; // Correct for bond decimals
+     msg!("bond_amount: {:?}", bond_amount);
+ 
+     // Stablecoin amount to mint
+     let tokens_to_mint = bond_amount;
+     msg!("tokens_to_mint: {:?}", tokens_to_mint);
+ 
+     // ... (SOL Transfer code)
+ 
+     // Update CoinAccount balance
+     let coin_account = &mut ctx.accounts.coin_account;
+     coin_account.balance += sol_amount;
 
     // SOL Transfer 
     anchor_lang::system_program::transfer(
@@ -62,11 +73,11 @@ pub fn mint_tokens(ctx: Context<MintTokens>, sol_amount: u64) -> Result<()> {
     let signer = &[&treasury_seeds[..]];
 
     // 8. Calculate bond amount based on 6 decimal places
-    let bond_decimals = 6;
-    let bond_amount_f64 = sol_amount as f64 / price_f64;
-    let adjusted_bond_amount = bond_amount_f64 / 10_f64.powi(bond_decimals as i32);
-    let adjusted_bond_amount = adjusted_bond_amount as u64;
-    msg!("adjusted_bond_amount: {:?}", adjusted_bond_amount);
+//     let bond_decimals = 6;
+//     let bond_amount_f64 = sol_amount as f64 / price_f64;
+// let adjusted_bond_amount = bond_amount_f64 * 1000.0; // Adjust for decimal difference
+// let adjusted_bond_amount = adjusted_bond_amount as u64; 
+//     msg!("adjusted_bond_amount: {:?}", adjusted_bond_amount);
 
     // 9. Create CPI context for transferring bond tokens
     let cpi_accounts = TransferChecked {
@@ -82,7 +93,7 @@ pub fn mint_tokens(ctx: Context<MintTokens>, sol_amount: u64) -> Result<()> {
     );
 
     // 10. Transfer bond tokens
-    transfer_checked(cpi_context, adjusted_bond_amount, bond_decimals)?;
+    transfer_checked(cpi_context, bond_amount, bond_decimals)?;
 
     // --- 11. Stablecoin Minting (CoinAccount to User) ---
     let coin_account_bump = ctx.accounts.coin_account.bump;

@@ -22,4 +22,5 @@ pub enum CustomError {
     InvalidDescription, 
     #[msg("Invalid coin type.")]
     InvalidCoinType,
+    
 }

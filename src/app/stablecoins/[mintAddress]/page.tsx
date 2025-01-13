@@ -43,6 +43,16 @@ export default function StablecoinPage() {
 
     
   async function derivePDAs() {
+    
+  }
+
+  // Function to handle minting of tokens
+  const handleMint = async () => {
+if (!publicKey) {
+  toast.error("Wallet not connected");
+  return;
+}
+    
     const [derivedTreasury] = PublicKey.findProgramAddressSync(
       [Buffer.from("TREASURY3")],
       program.programId
@@ -63,17 +73,15 @@ export default function StablecoinPage() {
     const mintPublicKey = new PublicKey(mintAddress);
     const derivedUserStablecoinAta = await getAssociatedTokenAddress(
       mintPublicKey,
-      publicKey!,
+      publicKey,
       false, 
       TOKEN_PROGRAM_ID
     );
     setUserStablecoinAta(derivedUserStablecoinAta);
     console.log("derivedUserStablecoinAta", derivedUserStablecoinAta.toBase58());
-  }
 
-  // Function to handle minting of tokens
-  const handleMint = async () => {
-    derivePDAs();
+
+
     if (!publicKey || !mintAddress || !treasury || !bond_ata) {
       toast.error("Wallet not connected or required data is missing.");
       return;
@@ -136,7 +144,39 @@ export default function StablecoinPage() {
 
   /// burn 
   const handleBurn = async () => {
-    derivePDAs();
+    
+    if (!publicKey) {
+  toast.error("Wallet not connected");
+  return;
+}
+    
+    const [derivedTreasury] = PublicKey.findProgramAddressSync(
+      [Buffer.from("TREASURY3")],
+      program.programId
+    );
+    setTreasury(derivedTreasury);
+
+    console.log("derivedTreasury", derivedTreasury.toBase58());
+
+    const derivedBondAta = getAssociatedTokenAddressSync(
+      bondMint,
+      derivedTreasury,
+      true,
+      TOKEN_2022_PROGRAM_ID
+    );
+    setBond_ata(derivedBondAta);
+    console.log("derivedBondAta", derivedBondAta.toBase58());
+
+    const mintPublicKey = new PublicKey(mintAddress);
+    const derivedUserStablecoinAta = await getAssociatedTokenAddress(
+      mintPublicKey,
+      publicKey,
+      false, 
+      TOKEN_PROGRAM_ID
+    );
+    setUserStablecoinAta(derivedUserStablecoinAta);
+    console.log("derivedUserStablecoinAta", derivedUserStablecoinAta.toBase58());
+
   if (!publicKey || !mintAddress || !treasury || !bond_ata) {
     toast.error("Wallet not connected or required data is missing.");
     return;
@@ -220,8 +260,29 @@ export default function StablecoinPage() {
   // fetch mint data
   useEffect(() => {
     const fetchMintData = async () => {
-      derivePDAs();
-      if (!mintAddress || !program || !publicKey) return;
+          
+          const [derivedTreasury] = PublicKey.findProgramAddressSync(
+            [Buffer.from("TREASURY3")],
+            program.programId
+          );
+          setTreasury(derivedTreasury);
+      
+          console.log("derivedTreasury", derivedTreasury.toBase58());
+      
+          const derivedBondAta = getAssociatedTokenAddressSync(
+            bondMint,
+            derivedTreasury,
+            true,
+            TOKEN_2022_PROGRAM_ID
+          );
+          setBond_ata(derivedBondAta);
+          console.log("derivedBondAta", derivedBondAta.toBase58());
+      
+          const mintPublicKey = new PublicKey(mintAddress);
+          
+      
+      
+      if (!mintAddress || !program ) return;
   
       try {
         const mintPublicKey = new PublicKey(mintAddress);

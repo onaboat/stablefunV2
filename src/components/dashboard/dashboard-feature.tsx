@@ -44,28 +44,37 @@ export default function DashboardFeature() {
     setIsLoading(true);
     try {
       const accounts = await connection.getProgramAccounts(program.programId);
-      
+
+      const excludedAccounts = [
+        "FQBv64kBMVAcAJx3daSrNzQsxiBievK1CfBttGobeLYr", 
+        "5BHfykJojo2LnFwmLq9fZruysQALfPtLtdrefzza1Dgz"
+      ];
+
       const coinAccounts = await Promise.all(
-        accounts.map(async acc => {
-          try {
-            const coin = await program.account.coinAccount.fetch(acc.pubkey);
-            return {
-              ...coin,
-              pubkey: acc.pubkey.toBase58()
-            };
-          } catch (error) {
-            console.error("Error processing coin account:", error);
-            return null;
-          }
-        })
+        accounts
+          .filter((acc) => !excludedAccounts.includes(acc.pubkey.toBase58())) 
+          .map(async (acc) => {
+            try {
+              const coin = await program.account.coinAccount.fetch(acc.pubkey);
+              return {
+                ...coin,
+                pubkey: acc.pubkey.toBase58(),
+              };
+            } catch (error) {
+              console.error("Error processing coin account:", error, "Account:", acc.pubkey.toBase58());
+              return null;
+            }
+          })
       );
 
-      setCoins(coinAccounts.filter((c): c is (CoinData & { pubkey: string }) => 
-        c !== null && 'pubkey' in c && 'mint' in c && 'coinType' in c
-      ));
+      setCoins(
+        coinAccounts.filter((c): c is CoinData & { pubkey: string } =>
+          c !== null && 'pubkey' in c && 'mint' in c && 'coinType' in c
+        )
+      );
     } catch (error) {
-      console.error("Error fetching accounts:", error);
-      toast.error("Failed to fetch coins");
+      console.error('Error fetching accounts:', error);
+      toast.error('Failed to fetch coins');
     } finally {
       setIsLoading(false);
     }
